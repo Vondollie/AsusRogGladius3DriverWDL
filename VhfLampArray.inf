@@ -28,7 +28,7 @@ VhfLampArray.sys = 1,,
 %ManufacturerName% = Standard,NT$ARCH$.10.0...16299 ; %13% support introduced in build 16299
 
 [Standard.NT$ARCH$.10.0...16299]
-%VhfLampArray.DeviceDesc% = VhfLampArray_Device, USB\VID_1532&PID_0085&MI_01 ; TODO: edit hw-id
+%VhfLampArray.DeviceDesc% = VhfLampArray_Device, HID\VID_0B05&PID_197B&MI_00 ; TODO: edit hw-id
 
 [VhfLampArray_Device.NT]
 CopyFiles = File_Copy
@@ -64,5 +64,5 @@ KmdfLibraryVersion = $KMDFVERSION$
 SPSVCINST_ASSOCSERVICE = 0x00000002
 ManufacturerName = "Vondollie"
 DiskName = "VhfLampArray Installation Disk"
-VhfLampArray.DeviceDesc = "Razer Basilisk V2 WDL"
+VhfLampArray.DeviceDesc = "Asus Gladius III WDL"
 VhfLampArray.SVCDESC = "VhfLampArray Service"

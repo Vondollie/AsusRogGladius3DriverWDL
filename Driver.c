@@ -1,6 +1,5 @@
 #include <ntddk.h>
 #include <wdf.h>
-#include <vhf.h>
 
 #include "Device.h"
 #include "DeviceContext.h"
@@ -24,6 +23,8 @@ HIDINJECTOR_EvtDeviceSelfManagedIoInit(
         // TODO; seach all KDPrint Calls to make sure parameters match format specifiers
         KdPrint(("VhfStart failed %d\n", status));
     }
+
+    KdPrint(("Vhf Started: 0x%X\n", status));
 
     return status;
 }
@@ -65,14 +66,50 @@ NTSTATUS EvtDeviceAdd(WDFDRIVER Driver, PWDFDEVICE_INIT DeviceInit) {
     // Инициализация атрибутов устройства
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, DEVICE_CONTEXT);
 
-    //attributes.EvtCleanupCallback = EvtDeviceContextCleanup;
-
     // Создание устройства
     status = WdfDeviceCreate(&DeviceInit, &attributes, &device);
     if (!NT_SUCCESS(status)) {
         KdPrint(("Failed to create device: 0x%X\n", status));
         return status;
     }
+
+    WDFIOTARGET ioTarget = WdfDeviceGetIoTarget(device);
+    
+    if (!ioTarget)
+    {
+        KdPrint(("Failed to get I/O target.\n"));
+        return STATUS_INVALID_DEVICE_STATE;
+    }
+
+    //WDFIOTARGET ioTarget;
+    //WDF_IO_TARGET_OPEN_PARAMS openParams;
+
+    //status = WdfIoTargetCreate(device, WDF_NO_OBJECT_ATTRIBUTES, &ioTarget);
+    //if (!NT_SUCCESS(status)) {
+    //    KdPrint(("WdfIoTargetCreate failed: 0x%X\n", status));
+    //    return status;
+    //}
+
+    //PDEVICE_OBJECT pdev = WdfDeviceWdmGetDeviceObject(device);
+    //WDF_IO_TARGET_OPEN_PARAMS_INIT_EXISTING_DEVICE(&openParams, pdev);
+
+    //status = WdfIoTargetOpen(
+    //    ioTarget,
+    //    &openParams
+    //);
+
+    //if (!NT_SUCCESS(status)) {
+    //    KdPrint(("WdfIoTargetOpen failed: 0x%X\n", status));
+    //    return status;
+    //}
+
+
+    PDEVICE_CONTEXT context = DeviceGetContext(device);
+    context->ioTarget = ioTarget;
+
+    //WDFQUEUE queue;
+    //status = RawQueueCreate(device, &queue);
+    //context->Queue = queue;
 
     // Создание виртуального HID-устройства
     status = CreateVirtualHidDevice(device);

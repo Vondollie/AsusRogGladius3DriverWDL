@@ -1,6 +1,6 @@
 #pragma once
 #include <ntddk.h>
-#include <vhf.h>
+#include "DeviceContext.h"
 
 #define LAMP_ARRAY_ATTRIBUTES_REPORT_ID 1
 #define LAMP_ATTRIBUTES_REQUEST_REPORT_ID 2
@@ -117,5 +117,5 @@ NTSTATUS ProcessLampAttributesReport(PHID_XFER_PACKET HidTransferPacket);
 NTSTATUS OnLampAttributesRequestReport(PHID_XFER_PACKET HidTransferPacket);
 NTSTATUS OnLampArrayControlReport(PHID_XFER_PACKET HidTransferPacket);
 
-NTSTATUS OnLampMultiUpdateReport(PHID_XFER_PACKET HidTransferPacket);
-NTSTATUS OnLampRangeUpdateReport(PHID_XFER_PACKET HidTransferPacket);
+NTSTATUS OnLampMultiUpdateReport(PDEVICE_CONTEXT VhfClientContext, PHID_XFER_PACKET HidTransferPacket);
+NTSTATUS OnLampRangeUpdateReport(PDEVICE_CONTEXT VhfClientContext, PHID_XFER_PACKET HidTransferPacket);

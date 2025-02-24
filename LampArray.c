@@ -1,4 +1,7 @@
+#include "Hid.h"
 #include "LampArray.h"
+#include "DeviceContext.h"
+
 
 #define LAMP_UPDATE_LATENCY 4000
 #define LAMP_COUNT 8
@@ -75,15 +78,75 @@ NTSTATUS OnLampAttributesRequestReport(PHID_XFER_PACKET HidTransferPacket) {
 
 NTSTATUS OnLampArrayControlReport(PHID_XFER_PACKET HidTransferPacket) {
     UNREFERENCED_PARAMETER(HidTransferPacket);
+
+    //LampArrayControlReport* report = (LampArrayControlReport*)&HidTransferPacket->reportBuffer[1];
+
     return STATUS_SUCCESS;
 }
 
-NTSTATUS OnLampMultiUpdateReport(PHID_XFER_PACKET HidTransferPacket) {
-    UNREFERENCED_PARAMETER(HidTransferPacket);
+NTSTATUS OnLampMultiUpdateReport(PDEVICE_CONTEXT VhfClientContext, PHID_XFER_PACKET HidTransferPacket) {
+    //UNREFERENCED_PARAMETER(VhfClientContext);
+    //UNREFERENCED_PARAMETER(HidTransferPacket);
+    KdPrint(("OnLampMultiUpdateReport"));
+    LampMultiUpdateReport* report = (LampMultiUpdateReport*)&HidTransferPacket->reportBuffer[1];
+
+    for (UINT8 i = 0; i < report->lampCount; i++)
+    {
+        if (report->lampIds[i] < LAMP_COUNT)
+        {
+            UCHAR buffer[65];
+            RtlFillMemory(buffer, 65, 0);
+            buffer[0x00] = 0x00;
+            buffer[0x01] = 0x51;
+            buffer[0x02] = 0x28;
+            buffer[0x03] = i;
+            buffer[0x04] = 0x00;
+            buffer[0x05] = 0x00;
+            buffer[0x06] = 0x64;
+            buffer[0x07] = report->colors->red;
+            buffer[0x08] = report->colors->green;
+            buffer[0x09] = report->colors->blue;
+
+            NTSTATUS status = SendHidOutputReportToDevice(VhfClientContext->ioTarget, buffer, 65);
+            KdPrint(("SendHidOutputReportToDevice: 0x%X\n", status));
+        }
+    }
+
     return STATUS_SUCCESS;
 }
 
-NTSTATUS OnLampRangeUpdateReport(PHID_XFER_PACKET HidTransferPacket) {
-    UNREFERENCED_PARAMETER(HidTransferPacket);
+NTSTATUS OnLampRangeUpdateReport(PDEVICE_CONTEXT VhfClientContext, PHID_XFER_PACKET HidTransferPacket) {
+    //UNREFERENCED_PARAMETER(VhfClientContext);
+    //UNREFERENCED_PARAMETER(HidTransferPacket);
+
+    KdPrint(("OnLampRangeUpdateReport"));
+
+    LampRangeUpdateReport* report = (LampRangeUpdateReport*)&HidTransferPacket->reportBuffer[1];
+
+    if (report->lampIdStart >= 0 && report->lampIdStart < LAMP_COUNT &&
+        report->lampIdEnd >= 0 && report->lampIdEnd < LAMP_COUNT &&
+        report->lampIdStart <= report->lampIdEnd)
+    {
+        for (UINT16 i = report->lampIdStart; i <= report->lampIdEnd; i++)
+        {
+            UCHAR buffer[65];
+            RtlFillMemory(buffer, 65, 0);
+            buffer[0x00] = 0x00;
+            buffer[0x01] = 0x51;
+            buffer[0x02] = 0x28;
+            buffer[0x03] = (UINT8)i;
+            buffer[0x04] = 0x00;
+            buffer[0x05] = 0x00;
+            buffer[0x06] = 0x64;
+            buffer[0x07] = report->color.red;
+            buffer[0x08] = report->color.green;
+            buffer[0x09] = report->color.blue;
+
+
+            NTSTATUS status = SendHidOutputReportToDevice(VhfClientContext->ioTarget, buffer, 65);
+            KdPrint(("SendHidOutputReportToDevice: 0x%X\n", status));
+        }
+    }
+
     return STATUS_SUCCESS;
 }

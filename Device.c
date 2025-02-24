@@ -144,25 +144,6 @@ UCHAR lampArrayReportDescriptor[] = {
     0xC0,                            // EndCollection()
 };
 
-
-VOID
-EvtDeviceContextCleanup(
-    _In_ WDFOBJECT DeviceObject
-)
-{
-    PDEVICE_CONTEXT deviceContext;
-
-    PAGED_CODE();
-
-    deviceContext = DeviceGetContext(DeviceObject);
-
-    if (deviceContext->VhfHandle != WDF_NO_HANDLE)
-    {
-        VhfDelete(deviceContext->VhfHandle, TRUE);
-    }
-
-}
-
 VOID
 EvtVhfAsyncOperationGetFeature(
     _In_ PVOID               VhfClientContext,
@@ -174,6 +155,8 @@ EvtVhfAsyncOperationGetFeature(
     UNREFERENCED_PARAMETER(VhfOperationContext);
 
     NTSTATUS status = STATUS_SUCCESS; // TODO change default status
+
+    KdPrint(("Vhf Set Feature: 0x%X\n", HidTransferPacket->reportId));
 
     switch (HidTransferPacket->reportId)
     {
@@ -199,11 +182,15 @@ EvtVhfAsyncOperationSetFeature(
     _In_opt_ PVOID           VhfOperationContext,
     _In_ PHID_XFER_PACKET    HidTransferPacket
 ) {
-    UNREFERENCED_PARAMETER(VhfClientContext);
     UNREFERENCED_PARAMETER(VhfOperationHandle);
     UNREFERENCED_PARAMETER(VhfOperationContext);
 
+    PDEVICE_CONTEXT context = (PDEVICE_CONTEXT)VhfClientContext;
+
+
     NTSTATUS status = STATUS_SUCCESS; // TODO change default status
+
+    KdPrint(("Vhf Set Feature: 0x%X\n", HidTransferPacket->reportId));
 
     switch (HidTransferPacket->reportId)
     {
@@ -214,12 +201,12 @@ EvtVhfAsyncOperationSetFeature(
     }
     case LAMP_MULTI_UPDATE_REPORT_ID:
     {
-        status = OnLampMultiUpdateReport(HidTransferPacket);
+        status = OnLampMultiUpdateReport(context, HidTransferPacket);
         break;
     }
     case LAMP_RANGE_UPDATE_REPORT_ID:
     {
-        status = OnLampRangeUpdateReport(HidTransferPacket);
+        status = OnLampRangeUpdateReport(context, HidTransferPacket);
         break;
     }
     case LAMP_ARRAY_CONTROL_REPORT_ID:
@@ -249,13 +236,13 @@ NTSTATUS CreateVirtualHidDevice(_In_ WDFDEVICE DeviceObject) {
     vhfConfig.VendorID = 0x7E4C;
     vhfConfig.ProductID = 0x1001;
     vhfConfig.VersionNumber = 0x0100;
+    vhfConfig.VhfClientContext = deviceContext;
+
 
     status = VhfCreate(&vhfConfig, &deviceContext->VhfHandle);
     if (!NT_SUCCESS(status)) {
-        KdPrint(("Failed to create virtual HID device: 0x%X\n", status));
         return status;
     }
 
-    KdPrint(("Virtual HID device created successfully.\n"));
     return STATUS_SUCCESS;
 }

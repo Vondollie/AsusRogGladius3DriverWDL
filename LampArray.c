@@ -4,7 +4,7 @@
 
 
 #define LAMP_UPDATE_LATENCY 4000
-#define LAMP_COUNT 8
+#define LAMP_COUNT 3
 #define BOUND_WIDTH 40000
 #define BOUND_HEIGHT 70000
 #define BOUND_DEPTH 55000
@@ -18,11 +18,11 @@ static LampAttributesResponseReport lampAttributes[] =
     {0x00, 1000, 8000, 0, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},
     {0x01, 2000, 8000, 0, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},
     {0x02, 3000, 8000, 0, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},
-    {0x03, 4000, 8000, 0, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},
+    /*{0x03, 4000, 8000, 0, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},
     {0x04, 5000, 8000, 0, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},
     {0x05, 6000, 8000, 0, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},
     {0x06, 7000, 8000, 0, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},
-    {0x07, 8000, 8000, 0, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},
+    {0x07, 8000, 8000, 0, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},*/
 };
 
 NTSTATUS ProcessLampArrayAttributesReport(PHID_XFER_PACKET HidTransferPacket) {
@@ -76,18 +76,41 @@ NTSTATUS OnLampAttributesRequestReport(PHID_XFER_PACKET HidTransferPacket) {
     return STATUS_SUCCESS;
 }
 
-NTSTATUS OnLampArrayControlReport(PHID_XFER_PACKET HidTransferPacket) {
-    UNREFERENCED_PARAMETER(HidTransferPacket);
+NTSTATUS OnLampArrayControlReport(PDEVICE_CONTEXT VhfClientContext, PHID_XFER_PACKET HidTransferPacket) {
+    NTSTATUS status = STATUS_SUCCESS;
 
-    //LampArrayControlReport* report = (LampArrayControlReport*)&HidTransferPacket->reportBuffer[1];
+    LampArrayControlReport* report = (LampArrayControlReport*)&HidTransferPacket->reportBuffer[1];
 
-    return STATUS_SUCCESS;
+    if (report->autonomousMode == TRUE) {
+        for (UINT8 i = 0; i < LAMP_COUNT; i++)
+        {
+            UCHAR buffer[65];
+            RtlFillMemory(buffer, 65, 0);
+            buffer[0x00] = 0x00;
+            buffer[0x01] = 0x51;
+            buffer[0x02] = 0x28;
+            buffer[0x03] = i;
+            buffer[0x04] = 0x00;
+            buffer[0x05] = 0x00;
+            buffer[0x06] = 0x64;
+            buffer[0x07] = 0x00;
+            buffer[0x08] = 0x00;
+            buffer[0x09] = 0x00;
+
+            status = HidSetFeature(VhfClientContext, buffer, 65);
+
+            LARGE_INTEGER interval;
+            interval.QuadPart = -(10 * 1000 * 10); // Преобразование миллисекунд в 100-наносекундные интервалы
+
+            KeDelayExecutionThread(KernelMode, FALSE, &interval);
+        }
+    }
+
+    return status;
 }
 
 NTSTATUS OnLampMultiUpdateReport(PDEVICE_CONTEXT VhfClientContext, PHID_XFER_PACKET HidTransferPacket) {
-    //UNREFERENCED_PARAMETER(VhfClientContext);
-    //UNREFERENCED_PARAMETER(HidTransferPacket);
-    KdPrint(("OnLampMultiUpdateReport"));
+    NTSTATUS status = STATUS_SUCCESS;
     LampMultiUpdateReport* report = (LampMultiUpdateReport*)&HidTransferPacket->reportBuffer[1];
 
     for (UINT8 i = 0; i < report->lampCount; i++)
@@ -107,19 +130,20 @@ NTSTATUS OnLampMultiUpdateReport(PDEVICE_CONTEXT VhfClientContext, PHID_XFER_PAC
             buffer[0x08] = report->colors->green;
             buffer[0x09] = report->colors->blue;
 
-            NTSTATUS status = SendHidOutputReportToDevice(VhfClientContext->ioTarget, buffer, 65);
-            KdPrint(("SendHidOutputReportToDevice: 0x%X\n", status));
+            status = HidSetFeature(VhfClientContext, buffer, 65);
+
+            LARGE_INTEGER interval;
+            interval.QuadPart = -(10 * 1000 * 10); // Преобразование миллисекунд в 100-наносекундные интервалы
+
+            KeDelayExecutionThread(KernelMode, FALSE, &interval);
         }
     }
 
-    return STATUS_SUCCESS;
+    return status;
 }
 
 NTSTATUS OnLampRangeUpdateReport(PDEVICE_CONTEXT VhfClientContext, PHID_XFER_PACKET HidTransferPacket) {
-    //UNREFERENCED_PARAMETER(VhfClientContext);
-    //UNREFERENCED_PARAMETER(HidTransferPacket);
-
-    KdPrint(("OnLampRangeUpdateReport"));
+    NTSTATUS status = STATUS_SUCCESS;
 
     LampRangeUpdateReport* report = (LampRangeUpdateReport*)&HidTransferPacket->reportBuffer[1];
 
@@ -143,10 +167,14 @@ NTSTATUS OnLampRangeUpdateReport(PDEVICE_CONTEXT VhfClientContext, PHID_XFER_PAC
             buffer[0x09] = report->color.blue;
 
 
-            NTSTATUS status = SendHidOutputReportToDevice(VhfClientContext->ioTarget, buffer, 65);
-            KdPrint(("SendHidOutputReportToDevice: 0x%X\n", status));
+            status = HidSetFeature(VhfClientContext, buffer, 65);
+
+            LARGE_INTEGER interval;
+            interval.QuadPart = -(10 * 1000 * 10); // Преобразование миллисекунд в 100-наносекундные интервалы
+
+            KeDelayExecutionThread(KernelMode, FALSE, &interval);
         }
     }
 
-    return STATUS_SUCCESS;
+    return status;
 }

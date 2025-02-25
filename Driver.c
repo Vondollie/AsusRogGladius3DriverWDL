@@ -73,6 +73,38 @@ NTSTATUS EvtDeviceAdd(WDFDRIVER Driver, PWDFDEVICE_INIT DeviceInit) {
         return status;
     }
 
+    PDEVICE_CONTEXT context = DeviceGetContext(device);
+
+    // FROM FIREFLY
+    WDFMEMORY memory;
+    size_t bufferLength;
+
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+
+    attributes.ParentObject = device;
+
+    status = WdfDeviceAllocAndQueryProperty(device,
+        DevicePropertyPhysicalDeviceObjectName,
+        NonPagedPoolNx,
+        &attributes,
+        &memory);
+
+    if (!NT_SUCCESS(status)) {
+        KdPrint(("FireFly: WdfDeviceAllocAndQueryProperty failed 0x%x\n", status));
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    context->PdoName.Buffer = WdfMemoryGetBuffer(memory, &bufferLength);
+
+    if (context->PdoName.Buffer == NULL) {
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    context->PdoName.MaximumLength = (USHORT)bufferLength;
+    context->PdoName.Length = (USHORT)bufferLength - sizeof(UNICODE_NULL);
+
+
+    // IOTARGET 
     WDFIOTARGET ioTarget = WdfDeviceGetIoTarget(device);
     
     if (!ioTarget)
@@ -104,7 +136,7 @@ NTSTATUS EvtDeviceAdd(WDFDRIVER Driver, PWDFDEVICE_INIT DeviceInit) {
     //}
 
 
-    PDEVICE_CONTEXT context = DeviceGetContext(device);
+    
     context->ioTarget = ioTarget;
 
     //WDFQUEUE queue;

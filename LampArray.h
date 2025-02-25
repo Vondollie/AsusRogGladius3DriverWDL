@@ -115,7 +115,7 @@ NTSTATUS ProcessLampArrayAttributesReport(PHID_XFER_PACKET HidTransferPacket);
 NTSTATUS ProcessLampAttributesReport(PHID_XFER_PACKET HidTransferPacket);
 
 NTSTATUS OnLampAttributesRequestReport(PHID_XFER_PACKET HidTransferPacket);
-NTSTATUS OnLampArrayControlReport(PHID_XFER_PACKET HidTransferPacket);
+NTSTATUS OnLampArrayControlReport(PDEVICE_CONTEXT VhfClientContext, PHID_XFER_PACKET HidTransferPacket);
 
 NTSTATUS OnLampMultiUpdateReport(PDEVICE_CONTEXT VhfClientContext, PHID_XFER_PACKET HidTransferPacket);
 NTSTATUS OnLampRangeUpdateReport(PDEVICE_CONTEXT VhfClientContext, PHID_XFER_PACKET HidTransferPacket);

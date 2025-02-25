@@ -1,6 +1,11 @@
 #pragma once
 #include <ntddk.h>
 #include <wdf.h>
+#include <hidpddi.h>
 #include <hidclass.h>
+#include <hidport.h>
 
-NTSTATUS SendHidOutputReportToDevice(WDFIOTARGET IoTarget, PVOID ReportData, ULONG ReportLength);
+#include "DeviceContext.h"
+
+NTSTATUS HidSetFeature(PDEVICE_CONTEXT DeviceContext, PVOID ReportData, ULONG ReportLength);
+NTSTATUS HidReadInput(PDEVICE_CONTEXT DeviceContext, PVOID ReportData, ULONG ReportLength);

@@ -211,7 +211,7 @@ EvtVhfAsyncOperationSetFeature(
     }
     case LAMP_ARRAY_CONTROL_REPORT_ID:
     {
-        status = OnLampArrayControlReport(HidTransferPacket);
+        status = OnLampArrayControlReport(context, HidTransferPacket);
         break;
     }
     }

@@ -9,7 +9,8 @@ typedef struct _DEVICE_CONTEXT
     WDFDEVICE       Device;
     VHFHANDLE       VhfHandle;
     WDFIOTARGET     ioTarget;
-    WDFQUEUE        Queue; 
+    WDFQUEUE        Queue;
+    UNICODE_STRING  PdoName;
 
 } DEVICE_CONTEXT, * PDEVICE_CONTEXT;
 

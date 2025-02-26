@@ -1,0 +1,68 @@
+;
+; AsusRogGladius3DriverWDL.inf
+;
+
+[Version]
+Signature   = "$WINDOWS NT$"
+Class       = HIDClass ; TODO: specify appropriate Class
+ClassGuid   = {745a17a0-74d3-11d0-b6fe-00a0c90f57da} ; TODO: specify appropriate ClassGuid
+Provider    = %ManufacturerName%
+CatalogFile = AsusRogGladius3DriverWDL.cat
+DriverVer   = ; TODO: set DriverVer in stampinf property pages
+PnpLockdown = 1
+
+[DestinationDirs]
+DefaultDestDir = 13
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+AsusRogGladius3DriverWDL.sys = 1,,
+
+;*****************************************
+; Install Section
+;*****************************************
+
+[Manufacturer]
+%ManufacturerName% = Standard,NT$ARCH$.10.0...16299 ; %13% support introduced in build 16299
+
+[Standard.NT$ARCH$.10.0...16299]
+%AsusRogGladius3DriverWDL.DeviceDesc% = AsusRogGladius3DriverWDL_Device, HID\VID_0B05&PID_197B&MI_00 ; TODO: edit hw-id
+
+[AsusRogGladius3DriverWDL_Device.NT]
+CopyFiles = File_Copy
+
+[File_Copy]
+AsusRogGladius3DriverWDL.sys
+
+[AsusRogGladius3DriverWDL_Device.NT.HW]
+AddReg = AsusRogGladius3DriverWDL_Device.NT.AddReg
+
+[AsusRogGladius3DriverWDL_Device.NT.AddReg]
+HKR,,"LowerFilters",0x00010008,"vhf"
+
+;-------------- Service installation
+[AsusRogGladius3DriverWDL_Device.NT.Services]
+AddService = AsusRogGladius3DriverWDL,%SPSVCINST_ASSOCSERVICE%, AsusRogGladius3DriverWDL_Service_Inst
+
+; -------------- AsusRogGladius3DriverWDL driver install sections
+[AsusRogGladius3DriverWDL_Service_Inst]
+DisplayName    = %AsusRogGladius3DriverWDL.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %13%\AsusRogGladius3DriverWDL.sys
+
+[AsusRogGladius3DriverWDL_Device.NT.Wdf]
+KmdfService = AsusRogGladius3DriverWDL, AsusRogGladius3DriverWDL_wdfsect
+
+[AsusRogGladius3DriverWDL_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+SPSVCINST_ASSOCSERVICE = 0x00000002
+ManufacturerName = "Vondollie"
+DiskName = "AsusRogGladius3DriverWDL Installation Disk"
+AsusRogGladius3DriverWDL.DeviceDesc = "Asus Gladius III WDL"
+AsusRogGladius3DriverWDL.SVCDESC = "AsusRogGladius3DriverWDL Service"

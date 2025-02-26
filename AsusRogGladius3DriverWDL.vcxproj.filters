@@ -19,7 +19,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Inf Include="VhfLampArray.inf">
+    <Inf Include="AsusRogGladius3DriverWDL.inf">
       <Filter>Driver Files</Filter>
     </Inf>
   </ItemGroup>

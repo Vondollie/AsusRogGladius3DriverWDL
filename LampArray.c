@@ -3,21 +3,21 @@
 #include "DeviceContext.h"
 
 
-#define LAMP_UPDATE_LATENCY 4000
+#define LAMP_UPDATE_LATENCY 10000
 #define LAMP_COUNT 3
-#define BOUND_WIDTH 40000
-#define BOUND_HEIGHT 70000
-#define BOUND_DEPTH 55000
-#define UPDATE_INTERVAL 33000
+#define BOUND_WIDTH 68000
+#define BOUND_HEIGHT 123000
+#define BOUND_DEPTH 44000
+#define UPDATE_INTERVAL 30000
 
 static LampAttributesResponseReport lampAttributes[] =
 {
     // All positions in millimeters from upper-left corner of device.
     // All times in milliseconds.
     // Id  X     Y     Z     Latency                        Purposes           RED   GRN   BLUE  GAIN  PROGAMMBLE?           KEY
-    {0x00, 1000, 8000, 0, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},
-    {0x01, 2000, 8000, 0, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},
-    {0x02, 3000, 8000, 0, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},
+    {0x00, 30000, 25000, 30000, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},
+    {0x01, 0, 70000, 15000, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},
+    {0x02, 34000, 100000, 30000, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},
     /*{0x03, 4000, 8000, 0, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},
     {0x04, 5000, 8000, 0, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},
     {0x05, 6000, 8000, 0, LAMP_UPDATE_LATENCY, LampPurposeAccent, 0xFF, 0xFF, 0xFF, 0x01, 1, 0x00},

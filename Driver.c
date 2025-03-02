@@ -4,7 +4,7 @@
 #include "Device.h"
 #include "DeviceContext.h"
 
-NTSTATUS
+static NTSTATUS
 HIDINJECTOR_EvtDeviceSelfManagedIoInit(
     WDFDEVICE WdfDevice
 )
@@ -29,7 +29,7 @@ HIDINJECTOR_EvtDeviceSelfManagedIoInit(
     return status;
 }
 
-VOID
+static VOID
 HIDINJECTOR_EvtDeviceSelfManagedIoCleanup(
     WDFDEVICE WdfDevice
 )
@@ -43,6 +43,56 @@ HIDINJECTOR_EvtDeviceSelfManagedIoCleanup(
     VhfDelete(deviceContext->VhfHandle, TRUE);
 
     return;
+}
+
+
+static NTSTATUS CreatePdoIoTarget(WDFDEVICE device, WDFIOTARGET* ioTarget) {
+    NTSTATUS status;
+    WDFMEMORY memory;
+    size_t bufferLength;
+    WDF_OBJECT_ATTRIBUTES attributes;
+    WDF_IO_TARGET_OPEN_PARAMS openParams;
+
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+
+    attributes.ParentObject = device;
+
+    status = WdfDeviceAllocAndQueryProperty(device,
+        DevicePropertyPhysicalDeviceObjectName,
+        NonPagedPoolNx,
+        &attributes,
+        &memory);
+
+    if (!NT_SUCCESS(status)) {
+        return status;
+    }
+
+    UNICODE_STRING pdoName;
+    pdoName.Buffer = WdfMemoryGetBuffer(memory, &bufferLength);
+    if (pdoName.Buffer == NULL) {
+        return STATUS_UNSUCCESSFUL;
+    }
+    pdoName.MaximumLength = (USHORT)bufferLength;
+    pdoName.Length = (USHORT)bufferLength - sizeof(UNICODE_NULL);
+
+    status = WdfIoTargetCreate(device,
+        WDF_NO_OBJECT_ATTRIBUTES,
+        ioTarget);
+
+    if (!NT_SUCCESS(status)) {
+        return status;
+    }
+
+    WDF_IO_TARGET_OPEN_PARAMS_INIT_OPEN_BY_NAME(
+        &openParams,
+        &pdoName,
+        FILE_WRITE_ACCESS);
+
+    openParams.ShareAccess = FILE_SHARE_WRITE | FILE_SHARE_READ;
+
+    status = WdfIoTargetOpen(*ioTarget, &openParams);
+    
+    return status;
 }
 
 // Обработчик добавления устройства
@@ -63,10 +113,9 @@ NTSTATUS EvtDeviceAdd(WDFDRIVER Driver, PWDFDEVICE_INIT DeviceInit) {
     wdfPnpPowerCallbacks.EvtDeviceSelfManagedIoCleanup = HIDINJECTOR_EvtDeviceSelfManagedIoCleanup;
     WdfDeviceInitSetPnpPowerEventCallbacks(DeviceInit, &wdfPnpPowerCallbacks);
 
-    // Инициализация атрибутов устройства
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, DEVICE_CONTEXT);
 
-    // Создание устройства
+    // Create device
     status = WdfDeviceCreate(&DeviceInit, &attributes, &device);
     if (!NT_SUCCESS(status)) {
         KdPrint(("Failed to create device: 0x%X\n", status));
@@ -75,34 +124,14 @@ NTSTATUS EvtDeviceAdd(WDFDRIVER Driver, PWDFDEVICE_INIT DeviceInit) {
 
     PDEVICE_CONTEXT context = DeviceGetContext(device);
 
-    WDFMEMORY memory;
-    size_t bufferLength;
-
-    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-
-    attributes.ParentObject = device;
-
-    status = WdfDeviceAllocAndQueryProperty(device,
-        DevicePropertyPhysicalDeviceObjectName,
-        NonPagedPoolNx,
-        &attributes,
-        &memory);
-
+    // Get PDO io target
+    status = CreatePdoIoTarget(device, &context->IoTarget);
     if (!NT_SUCCESS(status)) {
-        KdPrint(("FireFly: WdfDeviceAllocAndQueryProperty failed 0x%x\n", status));
-        return STATUS_UNSUCCESSFUL;
+        KdPrint(("Failed to create PDO io target: 0x%X\n", status));
+        return status;
     }
 
-    context->PdoName.Buffer = WdfMemoryGetBuffer(memory, &bufferLength);
-
-    if (context->PdoName.Buffer == NULL) {
-        return STATUS_UNSUCCESSFUL;
-    }
-
-    context->PdoName.MaximumLength = (USHORT)bufferLength;
-    context->PdoName.Length = (USHORT)bufferLength - sizeof(UNICODE_NULL);
-
-    // Создание виртуального HID-устройства
+    // Create virtual HID device
     status = CreateVirtualHidDevice(device);
     if (!NT_SUCCESS(status)) {
         KdPrint(("Failed to initialize virtual HID device: 0x%X\n", status));
@@ -112,8 +141,6 @@ NTSTATUS EvtDeviceAdd(WDFDRIVER Driver, PWDFDEVICE_INIT DeviceInit) {
     return STATUS_SUCCESS;
 }
 
-
-// Точка входа драйвера
 NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath) {
     WDF_DRIVER_CONFIG config;
     NTSTATUS status;

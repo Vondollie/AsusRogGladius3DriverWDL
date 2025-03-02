@@ -75,7 +75,6 @@ NTSTATUS EvtDeviceAdd(WDFDRIVER Driver, PWDFDEVICE_INIT DeviceInit) {
 
     PDEVICE_CONTEXT context = DeviceGetContext(device);
 
-    // FROM FIREFLY
     WDFMEMORY memory;
     size_t bufferLength;
 
@@ -102,46 +101,6 @@ NTSTATUS EvtDeviceAdd(WDFDRIVER Driver, PWDFDEVICE_INIT DeviceInit) {
 
     context->PdoName.MaximumLength = (USHORT)bufferLength;
     context->PdoName.Length = (USHORT)bufferLength - sizeof(UNICODE_NULL);
-
-
-    // IOTARGET 
-    WDFIOTARGET ioTarget = WdfDeviceGetIoTarget(device);
-    
-    if (!ioTarget)
-    {
-        KdPrint(("Failed to get I/O target.\n"));
-        return STATUS_INVALID_DEVICE_STATE;
-    }
-
-    //WDFIOTARGET ioTarget;
-    //WDF_IO_TARGET_OPEN_PARAMS openParams;
-
-    //status = WdfIoTargetCreate(device, WDF_NO_OBJECT_ATTRIBUTES, &ioTarget);
-    //if (!NT_SUCCESS(status)) {
-    //    KdPrint(("WdfIoTargetCreate failed: 0x%X\n", status));
-    //    return status;
-    //}
-
-    //PDEVICE_OBJECT pdev = WdfDeviceWdmGetDeviceObject(device);
-    //WDF_IO_TARGET_OPEN_PARAMS_INIT_EXISTING_DEVICE(&openParams, pdev);
-
-    //status = WdfIoTargetOpen(
-    //    ioTarget,
-    //    &openParams
-    //);
-
-    //if (!NT_SUCCESS(status)) {
-    //    KdPrint(("WdfIoTargetOpen failed: 0x%X\n", status));
-    //    return status;
-    //}
-
-
-    
-    context->ioTarget = ioTarget;
-
-    //WDFQUEUE queue;
-    //status = RawQueueCreate(device, &queue);
-    //context->Queue = queue;
 
     // Создание виртуального HID-устройства
     status = CreateVirtualHidDevice(device);

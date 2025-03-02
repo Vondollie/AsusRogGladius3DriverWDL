@@ -8,4 +8,3 @@
 #include "DeviceContext.h"
 
 NTSTATUS HidSetFeature(PDEVICE_CONTEXT DeviceContext, PVOID ReportData, ULONG ReportLength);
-NTSTATUS HidReadInput(PDEVICE_CONTEXT DeviceContext, PVOID ReportData, ULONG ReportLength);

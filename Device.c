@@ -156,8 +156,6 @@ EvtVhfAsyncOperationGetFeature(
 
     NTSTATUS status = STATUS_SUCCESS; // TODO change default status
 
-    KdPrint(("Vhf Set Feature: 0x%X\n", HidTransferPacket->reportId));
-
     switch (HidTransferPacket->reportId)
     {
     case LAMP_ARRAY_ATTRIBUTES_REPORT_ID:
@@ -187,10 +185,7 @@ EvtVhfAsyncOperationSetFeature(
 
     PDEVICE_CONTEXT context = (PDEVICE_CONTEXT)VhfClientContext;
 
-
     NTSTATUS status = STATUS_SUCCESS; // TODO change default status
-
-    KdPrint(("Vhf Set Feature: 0x%X\n", HidTransferPacket->reportId));
 
     switch (HidTransferPacket->reportId)
     {
